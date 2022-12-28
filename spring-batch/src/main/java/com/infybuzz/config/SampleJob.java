@@ -60,9 +60,9 @@ public class SampleJob {
 	
 	
 	//Este job representa un Tasklet-step. 
-	//@Bean //El bean es necesario si queremos que el job se ejecute, mientras este comentariado este no se ejecutara.
+	@Bean //El bean es necesario si queremos que el job se ejecute, mientras este comentariado este no se ejecutara.
 	public Job firstJob() {
-		return jobBuilderFactory.get("First job")//Creamos el Job
+		return jobBuilderFactory.get("First Job")//Creamos el Job
 				.incrementer(new RunIdIncrementer())//Se vuelve unique el job en la db por lo cual ahora puede ejecutarse multiples veces la misma instancia.
 		.start(firstStep())//Le agregamos el step al job y lo iniciamos.
 		.next(secondStep())//Le agreamos el segundo paso.
@@ -117,7 +117,7 @@ public class SampleJob {
 	//La diferencia es que este job trabaja un chunk-oriented Step mientras que el otro un Tasklet step
 	@Bean
 	public Job secondJob() {
-		return jobBuilderFactory.get("Second job")//Creamos el Job
+		return jobBuilderFactory.get("Second Job")//Creamos el Job
 				.incrementer(new RunIdIncrementer())//Se vuelve unique el job en la db por lo cual ahora puede ejecutarse multiples veces la misma instancia.
 		.listener(firstJobListener)//Agregamos el listener
 		.start(firstChunkStep())//Iniciamos el job con el firstChunkStep
