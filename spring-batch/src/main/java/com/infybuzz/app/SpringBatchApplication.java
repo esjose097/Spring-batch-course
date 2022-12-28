@@ -9,7 +9,8 @@ import org.springframework.context.annotation.ComponentScan;
 //Esto permite que se realice proceso de batch.
 @EnableBatchProcessing
 //Esto permite realizar la configuración dentro de un package especifico.
-@ComponentScan({"com.infybuzz.config", "com.infybuzz.service", "com.infybuzz.listener"})
+@ComponentScan({"com.infybuzz.config", "com.infybuzz.service", "com.infybuzz.listener", 
+	"com.infybuzz.reader", "com.infybuzz.writer", "com.infybuzz.processor"})
 public class SpringBatchApplication {
 
 	public static void main(String[] args) {

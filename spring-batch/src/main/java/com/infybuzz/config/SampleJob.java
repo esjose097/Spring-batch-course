@@ -18,7 +18,10 @@ import org.springframework.context.annotation.Configuration;
 
 import com.infybuzz.listener.FirstJobListener;
 import com.infybuzz.listener.FirstStepListener;
+import com.infybuzz.processor.FirstItemProcessor;
+import com.infybuzz.reader.FirstItemReader;
 import com.infybuzz.service.SecondTasklet;
+import com.infybuzz.writer.FirstItemWriter;
 
 //Esta anotación se necesita para marcar la clase como una de configuración
 @Configuration
@@ -40,12 +43,24 @@ public class SampleJob {
 	@Autowired
 	private FirstJobListener firstJobListener;
 	
+	//Se inyecta el listener para el primer step
 	@Autowired
 	private FirstStepListener firstStepListener;
 	
+	@Autowired
+	private FirstItemReader firstItemReader;
 	
-	//Agregamos un bean para la creación de jobs de spring. 
-	@Bean
+	//Se inyecta el ItemProcessor
+	@Autowired
+	private FirstItemProcessor firstItemProcessor;
+	
+	//Se inyecta el ItemWriter
+	@Autowired
+	private FirstItemWriter firstItemWriter;
+	
+	
+	//Este job representa un Tasklet-step. 
+	//@Bean //El bean es necesario si queremos que el job se ejecute, mientras este comentariado este no se ejecutara.
 	public Job firstJob() {
 		return jobBuilderFactory.get("First job")//Creamos el Job
 				.incrementer(new RunIdIncrementer())//Se vuelve unique el job en la db por lo cual ahora puede ejecutarse multiples veces la misma instancia.
@@ -98,5 +113,26 @@ public class SampleJob {
 		};
 	}
 	*/
+	
+	//La diferencia es que este job trabaja un chunk-oriented Step mientras que el otro un Tasklet step
+	@Bean
+	public Job secondJob() {
+		return jobBuilderFactory.get("Second job")//Creamos el Job
+				.incrementer(new RunIdIncrementer())//Se vuelve unique el job en la db por lo cual ahora puede ejecutarse multiples veces la misma instancia.
+		.listener(firstJobListener)//Agregamos el listener
+		.start(firstChunkStep())//Iniciamos el job con el firstChunkStep
+		.next(secondStep()) //Continuamos con un tasklet step.
+		.build();
+	}
+	
+	//Representa un chunkStep, recordemos que los chunkSteps se componen de un reader, processor y writer.
+	private Step firstChunkStep() {
+		return stepBuilderFactory.get("First chunk Step")
+				.<Integer, Long>chunk(3)//Primero asignamos <Input, Output> y despues la longitud.
+				.reader(firstItemReader) //Agregamos el reader
+				.processor(firstItemProcessor) //Agregamos el processor
+				.writer(firstItemWriter) //Agregamos el writer.
+				.build();
+	}
 	
 }
