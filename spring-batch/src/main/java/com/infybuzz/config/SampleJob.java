@@ -5,6 +5,8 @@ package com.infybuzz.config;
 
 import java.io.File;
 
+import javax.sql.DataSource;
+
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepContribution;
@@ -14,6 +16,7 @@ import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.Tasklet;
+import org.springframework.batch.item.database.JdbcCursorItemReader;
 import org.springframework.batch.item.file.FlatFileItemReader;
 import org.springframework.batch.item.file.mapping.BeanWrapperFieldSetMapper;
 import org.springframework.batch.item.file.mapping.DefaultLineMapper;
@@ -27,11 +30,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.FileSystemResource;
-import org.springframework.oxm.jaxb.Jaxb2Marshaller;
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
 
 import com.infybuzz.listener.FirstJobListener;
 import com.infybuzz.listener.FirstStepListener;
 import com.infybuzz.model.StudentCsv;
+import com.infybuzz.model.StudentJdbc;
 import com.infybuzz.model.StudentJson;
 import com.infybuzz.model.StudentXml;
 import com.infybuzz.processor.FirstItemProcessor;
@@ -73,6 +77,10 @@ public class SampleJob {
 	//Se inyecta el ItemWriter
 	@Autowired
 	private FirstItemWriter firstItemWriter;
+	
+	//Se inyecta la datasource para la conexión a una bd.
+	@Autowired
+	private DataSource dataSource;
 	
 	
 	//Este job representa un Tasklet-step. 
@@ -144,10 +152,11 @@ public class SampleJob {
 	//Representa un chunkStep, recordemos que los chunkSteps se componen de un reader, processor y writer.
 	private Step firstChunkStep() {
 		return stepBuilderFactory.get("First chunk Step")
-				.<StudentXml, StudentXml>chunk(3)//Primero asignamos <Input, Output> y despues la longitud.
+				.<StudentJdbc, StudentJdbc>chunk(3)//Primero asignamos <Input, Output> y despues la longitud.
 				//.reader(flatFileItemReader(null)) //Agregamos el reader para csv
 				//.reader(jsonItemReader(null))//Agregamos el reader para JSON
-				.reader(staxEventItemReader(null)) //Agregamos el reader para xml
+				//.reader(staxEventItemReader(null)) //Agregamos el reader para xml
+				.reader(jdbcCursorItemReader()) //Agregamos el reader para jdbc/db
 				//.processor(firstItemProcessor) //Agregamos el processor
 				.writer(firstItemWriter) //Agregamos el writer.
 				.build();
@@ -214,22 +223,58 @@ public class SampleJob {
 		return jsonItemReader;
 	}
 	
+	/*
 	@StepScope
 	@Bean
+	Reader para la lectura de archivos xml
 	public StaxEventItemReader<StudentXml> staxEventItemReader(
+			Le damos la ruta como un parametro.
 			@Value("#{jobParameters['inputFile']}")FileSystemResource fileSystemResource){
+		Instanciamos un StaxEventItemReader
 		StaxEventItemReader<StudentXml> staxEventItemReader =
 				new StaxEventItemReader<StudentXml>();
 		
+		Le damos la ruta fuente del archivo a leer
 		staxEventItemReader.setResource(fileSystemResource);
+		
+		Le damos la palabra clave a buscar o mapear en el documento.
 		staxEventItemReader.setFragmentRootElementName("student");
 		
+		Le damos el modelo a mapear.
 		staxEventItemReader.setUnmarshaller(new Jaxb2Marshaller() {
 			{
 				setClassesToBeBound(StudentXml.class);
 			}
 		});
 		return staxEventItemReader;
+	}
+	*/
+	
+	//Metodo Reader para leer una base de datos con jdbc.
+	public JdbcCursorItemReader<StudentJdbc> jdbcCursorItemReader(){
+		
+		//Se instancia un JdbcCursorItemReader
+		JdbcCursorItemReader<StudentJdbc> jdbcCursorItemReader =
+				new JdbcCursorItemReader<StudentJdbc>();
+		
+		//Se establece la fuente, es decir la url de la base de datos.
+		jdbcCursorItemReader.setDataSource(dataSource);
+		
+		//Esto es practicamente una sentencia SQL yo puse una simple pero puede ser tan compleja como quieras.
+		jdbcCursorItemReader.setSql(
+				"select id, first_name as firstName, last_name as lastName, email");
+		
+		//Establecemos la clase a mapear.
+		jdbcCursorItemReader.setRowMapper(new BeanPropertyRowMapper<StudentJdbc>() {
+			{
+				setMappedClass(StudentJdbc.class);
+			}
+		});
+		
+		//jdbcCursorItemReader.setCurrentItemCount(2); //<-- Establece desde que registro empezará a leer.
+		//jdbcCursorItemReader.setMaxItemCount(8); // <-- Establece la cantidad maxima de registros que leera.
+		
+		return jdbcCursorItemReader;
 	}
 	
 }

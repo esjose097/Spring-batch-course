@@ -1,13 +1,8 @@
 /**
- * Clase especifica para xml
- */
+ * Clase modelo para un reader con una base de datos.*/
 package com.infybuzz.model;
 
-//import javax.xml.bind.annotation.XmlRootElement;
-
-//@XmlRootElement(name = "student")
-public class StudentXml {
-
+public class StudentJdbc {
 	private Long id;
 	private String firstName;
 	private String lastName;
@@ -37,10 +32,12 @@ public class StudentXml {
 	public void setEmail(String email) {
 		this.email = email;
 	}
+	
 	@Override
 	public String toString() {
-		return "StudentXml [id=" + id + ", firstName=" + firstName + ", lastName=" + lastName + ", email=" + email
+		return "StudentJdbc [id=" + id + ", firstName=" + firstName + ", lastName=" + lastName + ", email=" + email
 				+ "]";
 	}
+
 	
 }
