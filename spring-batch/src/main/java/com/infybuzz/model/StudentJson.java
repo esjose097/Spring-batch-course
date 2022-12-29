@@ -1,6 +1,5 @@
 /**
- * Se supone que esta clase es especifica para el json como modelo pero la verdad es que no le veo sentido
- * es exactamente igual a la otra, preferiria una clase padre o algo.
+ * Clase especifica para json.
  */
 
 package com.infybuzz.model;

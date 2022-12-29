@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<students>
+	<student>
+		<id>1</id>
+		<fistName>Itzel</fistName>
+		<lastName>Garza</lastName>
+		<email>itzel@gmail.com</email>
+	</student>
+	<student>
+		<id>2</id>
+		<fistName>Jose</fistName>
+		<lastName>Casal</lastName>
+		<email>jose@gmail.com</email>
+	</student>
+	<student>
+		<id>3</id>
+		<fistName>Daniel</fistName>
+		<lastName>Esquer</lastName>
+		<email>daniel@gmail.com</email>
+	</student>
+	<student>
+		<id>4</id>
+		<fistName>Angel</fistName>
+		<lastName>Santos</lastName>
+		<email>angel@gmail.com</email>
+	</student>
+	<student>
+		<id>5</id>
+		<fistName>Daisy</fistName>
+		<lastName>Casal</lastName>
+		<email>daisy@gmail.com</email>
+	</student>
+</students>

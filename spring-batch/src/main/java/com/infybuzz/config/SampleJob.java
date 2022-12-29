@@ -20,17 +20,20 @@ import org.springframework.batch.item.file.mapping.DefaultLineMapper;
 import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
 import org.springframework.batch.item.json.JacksonJsonObjectReader;
 import org.springframework.batch.item.json.JsonItemReader;
+import org.springframework.batch.item.xml.StaxEventItemReader;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.oxm.jaxb.Jaxb2Marshaller;
 
 import com.infybuzz.listener.FirstJobListener;
 import com.infybuzz.listener.FirstStepListener;
 import com.infybuzz.model.StudentCsv;
 import com.infybuzz.model.StudentJson;
+import com.infybuzz.model.StudentXml;
 import com.infybuzz.processor.FirstItemProcessor;
 import com.infybuzz.reader.FirstItemReader;
 import com.infybuzz.service.SecondTasklet;
@@ -141,9 +144,10 @@ public class SampleJob {
 	//Representa un chunkStep, recordemos que los chunkSteps se componen de un reader, processor y writer.
 	private Step firstChunkStep() {
 		return stepBuilderFactory.get("First chunk Step")
-				.<StudentJson, StudentJson>chunk(3)//Primero asignamos <Input, Output> y despues la longitud.
+				.<StudentXml, StudentXml>chunk(3)//Primero asignamos <Input, Output> y despues la longitud.
 				//.reader(flatFileItemReader(null)) //Agregamos el reader para csv
-				.reader(jsonItemReader(null))//Agregamos el reader para JSON
+				//.reader(jsonItemReader(null))//Agregamos el reader para JSON
+				.reader(staxEventItemReader(null)) //Agregamos el reader para xml
 				//.processor(firstItemProcessor) //Agregamos el processor
 				.writer(firstItemWriter) //Agregamos el writer.
 				.build();
@@ -151,7 +155,7 @@ public class SampleJob {
 	
 	@StepScope
 	@Bean
-	//Metodo que se encarga de leer un archivo Csv
+	//Metodo reader que se encarga de leer un archivo Csv
 	public FlatFileItemReader<StudentCsv> flatFileItemReader(
 			//Damos el valor de la ruta mediante un parametro.
 			@Value("#{jobParameters['inputFile']}")FileSystemResource fileSystemResource){
@@ -208,6 +212,24 @@ public class SampleJob {
 		//jsonItemReader.setCurrentItemCount(2); <-- Este metodo sirve para iniciar la lectura desde n item.
 		
 		return jsonItemReader;
+	}
+	
+	@StepScope
+	@Bean
+	public StaxEventItemReader<StudentXml> staxEventItemReader(
+			@Value("#{jobParameters['inputFile']}")FileSystemResource fileSystemResource){
+		StaxEventItemReader<StudentXml> staxEventItemReader =
+				new StaxEventItemReader<StudentXml>();
+		
+		staxEventItemReader.setResource(fileSystemResource);
+		staxEventItemReader.setFragmentRootElementName("student");
+		
+		staxEventItemReader.setUnmarshaller(new Jaxb2Marshaller() {
+			{
+				setClassesToBeBound(StudentXml.class);
+			}
+		});
+		return staxEventItemReader;
 	}
 	
 }
