@@ -1,6 +1,7 @@
 /**
  * Esta clase es un controlador API para poder inicializar los jobs con peticiones http
  */
+/*
 package com.infybuzz.controller;
 
 import java.util.HashMap;
@@ -51,5 +52,5 @@ public class JobController {
 		jobService.stopJob(jobExecutionId);
 		return "Job stopped...";
 	}
-	
 }
+*/

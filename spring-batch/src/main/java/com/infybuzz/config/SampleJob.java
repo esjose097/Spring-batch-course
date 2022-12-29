@@ -4,6 +4,9 @@
 package com.infybuzz.config;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.Writer;
+import java.util.Date;
 
 import javax.sql.DataSource;
 
@@ -18,9 +21,14 @@ import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.item.adapter.ItemReaderAdapter;
 import org.springframework.batch.item.database.JdbcCursorItemReader;
+import org.springframework.batch.item.file.FlatFileFooterCallback;
+import org.springframework.batch.item.file.FlatFileHeaderCallback;
 import org.springframework.batch.item.file.FlatFileItemReader;
+import org.springframework.batch.item.file.FlatFileItemWriter;
 import org.springframework.batch.item.file.mapping.BeanWrapperFieldSetMapper;
 import org.springframework.batch.item.file.mapping.DefaultLineMapper;
+import org.springframework.batch.item.file.transform.BeanWrapperFieldExtractor;
+import org.springframework.batch.item.file.transform.DelimitedLineAggregator;
 import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
 import org.springframework.batch.item.json.JacksonJsonObjectReader;
 import org.springframework.batch.item.json.JsonItemReader;
@@ -43,7 +51,7 @@ import com.infybuzz.model.StudentXml;
 import com.infybuzz.processor.FirstItemProcessor;
 import com.infybuzz.reader.FirstItemReader;
 import com.infybuzz.service.SecondTasklet;
-import com.infybuzz.service.StudentService;
+//import com.infybuzz.service.StudentService;
 import com.infybuzz.writer.FirstItemWriter;
 
 //Esta anotación se necesita para marcar la clase como una de configuración
@@ -86,8 +94,8 @@ public class SampleJob {
 	//private DataSource dataSource;
 	
 	//Se inyecta el servicio con el cual llamaremos a una REST API.
-	@Autowired 
-	StudentService studentService;
+	/*@Autowired 
+	StudentService studentService;*/
 	
 	
 	//Este job representa un Tasklet-step. 
@@ -159,14 +167,15 @@ public class SampleJob {
 	//Representa un chunkStep, recordemos que los chunkSteps se componen de un reader, processor y writer.
 	private Step firstChunkStep() {
 		return stepBuilderFactory.get("First chunk Step")
-				.<StudentResponse, StudentResponse>chunk(3)//Primero asignamos <Input, Output> y despues la longitud.
+				.<StudentJson, StudentJson>chunk(3)//Primero asignamos <Input, Output> y despues la longitud.
 				//.reader(flatFileItemReader(null)) //Agregamos el reader para csv
-				//.reader(jsonItemReader(null))//Agregamos el reader para JSON
+				.reader(jsonItemReader(null))//Agregamos el reader para JSON
 				//.reader(staxEventItemReader(null)) //Agregamos el reader para xml
 				//.reader(jdbcCursorItemReader()) //Agregamos el reader para jdbc/db
-				.reader(itemReaderAdapter()) //Agregamos el reader para peticiones REST.
+				//.reader(itemReaderAdapter()) //Agregamos el reader para peticiones REST.
 				//.processor(firstItemProcessor) //Agregamos el processor
-				.writer(firstItemWriter) //Agregamos el writer.
+				//.writer(firstItemWriter) //Agregamos el writer.
+				.writer(flatFileItemWriter(null)) //Agregamos el writer para Csv
 				.build();
 	}
 	
@@ -287,6 +296,7 @@ public class SampleJob {
 	*/
 	
 	//Reader para peticiones Rest Api.
+	/*
 	public ItemReaderAdapter<StudentResponse> itemReaderAdapter(){
 		//Declaramos un ItemReaderAdapter
 		ItemReaderAdapter<StudentResponse> itemReaderAdapter = 
@@ -299,5 +309,49 @@ public class SampleJob {
 		
 		return itemReaderAdapter;
 	}
+	*/
 	
+	//Se declara el writer para archivos csv
+	@StepScope
+	@Bean
+	public FlatFileItemWriter<StudentJson> flatFileItemWriter(
+			//Le damos la dirección del archivo a escribir mediante parametros
+			@Value("#{jobParameters['outputFile']}")FileSystemResource fileSystemResource){
+		FlatFileItemWriter<StudentJson> flatFileItemWriter = 
+				new FlatFileItemWriter<StudentJson>();
+		
+		//Le damos la fuente
+		flatFileItemWriter.setResource(fileSystemResource);
+		
+		//Agregamos la headerCallback
+		flatFileItemWriter.setHeaderCallback(new FlatFileHeaderCallback() {
+			
+			//Escribimos la cabecera del archivo
+			@Override
+			public void writeHeader(Writer writer) throws IOException {
+				writer.write("id,First Name,Last Name,Email");				
+			}
+		});
+		
+		//Agregamos los campos a editar
+		flatFileItemWriter.setLineAggregator(new DelimitedLineAggregator<StudentJson>() {
+			{
+				setFieldExtractor(new BeanWrapperFieldExtractor<StudentJson>() {
+					{
+						setNames(new String[] {"id","firstName","lastName","email"});
+					}
+				});
+			}
+		});
+		
+		//Agregamos una especie de pie de pagina
+		flatFileItemWriter.setFooterCallback(new FlatFileFooterCallback() {
+			
+			@Override
+			public void writeFooter(Writer writer) throws IOException {
+				writer.write("Created @ " + new Date());
+			}
+		});
+		return flatFileItemWriter;
+	}
 }

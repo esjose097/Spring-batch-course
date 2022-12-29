@@ -1,6 +1,7 @@
 /**
  * Clase servicio para llamar al servicio REST "spring-rest-service y obtener una lista de estudiantes 
  */
+/*
 package com.infybuzz.service;
 
 import java.util.ArrayList;
@@ -59,3 +60,4 @@ public class StudentService {
 		return null;
 	}
 }
+*/

@@ -16,13 +16,13 @@ import com.infybuzz.model.StudentResponse;
 import com.infybuzz.model.StudentXml;
 
 @Component
-public class FirstItemWriter implements ItemWriter<StudentResponse>{
+public class FirstItemWriter implements ItemWriter<StudentCsv>{
 
 	/*
 	 * Este es el metodo de escritura..
 	 */
 	@Override
-	public void write(List<? extends StudentResponse> items) throws Exception {
+	public void write(List<? extends StudentCsv> items) throws Exception {
 		System.out.println("Inside Iterm writer");
 		items.stream().forEach(System.out::println); //<--No conocia esta forma de iterar una lista.
 		
