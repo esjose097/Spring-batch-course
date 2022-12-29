@@ -1,0 +1,32 @@
+[
+	{
+		"id":1,
+		"firstName" : "Itzel",
+		"lastName" : "Garza",
+		"email":"itzel@gmail.com"
+	},
+		{
+		"id":2,
+		"firstName" : "Jose",
+		"lastName" : "Casal",
+		"email":"jose@gmail.com"
+	},
+		{
+		"id":3,
+		"firstName" : "Daniel",
+		"lastName" : "Esquer",
+		"email":"daniel@gmail.com"
+	},
+		{
+		"id":4,
+		"firstName" : "Angel",
+		"lastName" : "Santos",
+		"email":"angel@gmail.com"
+	},
+		{
+		"id":5,
+		"firstName" : "Daisy",
+		"lastName" : "Casal",
+		"email":"daisy@gmail.com"
+	}
+]

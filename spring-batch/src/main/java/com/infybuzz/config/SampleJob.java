@@ -18,6 +18,8 @@ import org.springframework.batch.item.file.FlatFileItemReader;
 import org.springframework.batch.item.file.mapping.BeanWrapperFieldSetMapper;
 import org.springframework.batch.item.file.mapping.DefaultLineMapper;
 import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
+import org.springframework.batch.item.json.JacksonJsonObjectReader;
+import org.springframework.batch.item.json.JsonItemReader;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,6 +30,7 @@ import org.springframework.core.io.FileSystemResource;
 import com.infybuzz.listener.FirstJobListener;
 import com.infybuzz.listener.FirstStepListener;
 import com.infybuzz.model.StudentCsv;
+import com.infybuzz.model.StudentJson;
 import com.infybuzz.processor.FirstItemProcessor;
 import com.infybuzz.reader.FirstItemReader;
 import com.infybuzz.service.SecondTasklet;
@@ -138,8 +141,9 @@ public class SampleJob {
 	//Representa un chunkStep, recordemos que los chunkSteps se componen de un reader, processor y writer.
 	private Step firstChunkStep() {
 		return stepBuilderFactory.get("First chunk Step")
-				.<StudentCsv, StudentCsv>chunk(3)//Primero asignamos <Input, Output> y despues la longitud.
-				.reader(flatFileItemReader(null)) //Agregamos el reader
+				.<StudentJson, StudentJson>chunk(3)//Primero asignamos <Input, Output> y despues la longitud.
+				//.reader(flatFileItemReader(null)) //Agregamos el reader para csv
+				.reader(jsonItemReader(null))//Agregamos el reader para JSON
 				//.processor(firstItemProcessor) //Agregamos el processor
 				.writer(firstItemWriter) //Agregamos el writer.
 				.build();
@@ -180,6 +184,30 @@ public class SampleJob {
 		flatFileItemReader.setLinesToSkip(1);
 		
 		return flatFileItemReader;
+	}
+	
+	//Metodo reader para leer archivos de tipo JSON.
+	@StepScope
+	@Bean
+	public JsonItemReader<StudentJson> jsonItemReader(
+			//Le damos la ruta del archivo mediante argunementos
+			@Value("#{jobParameters['inputFile']}")FileSystemResource fileSystemResource){
+
+		//Creamos un objeto JsonItemReader 
+		JsonItemReader<StudentJson> jsonItemReader =
+				new JsonItemReader<StudentJson>();
+		
+		//Le damos la ruta de la fuente es decir la ruta del archivo.
+		jsonItemReader.setResource(fileSystemResource);
+
+		//Aquí es como si le establecieramos el modelo que va mapear.
+		jsonItemReader.setJsonObjectReader(
+				new JacksonJsonObjectReader<>(StudentJson.class));
+		
+		//jsonItemReader.setMaxItemCount(2); <-- Este metodo da un limite de lecturas a tu reader.
+		//jsonItemReader.setCurrentItemCount(2); <-- Este metodo sirve para iniciar la lectura desde n item.
+		
+		return jsonItemReader;
 	}
 	
 }
