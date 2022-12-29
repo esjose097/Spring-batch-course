@@ -12,16 +12,17 @@ import org.springframework.stereotype.Component;
 import com.infybuzz.model.StudentCsv;
 import com.infybuzz.model.StudentJdbc;
 import com.infybuzz.model.StudentJson;
+import com.infybuzz.model.StudentResponse;
 import com.infybuzz.model.StudentXml;
 
 @Component
-public class FirstItemWriter implements ItemWriter<StudentJdbc>{
+public class FirstItemWriter implements ItemWriter<StudentResponse>{
 
 	/*
 	 * Este es el metodo de escritura..
 	 */
 	@Override
-	public void write(List<? extends StudentJdbc> items) throws Exception {
+	public void write(List<? extends StudentResponse> items) throws Exception {
 		System.out.println("Inside Iterm writer");
 		items.stream().forEach(System.out::println); //<--No conocia esta forma de iterar una lista.
 		

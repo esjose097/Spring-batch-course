@@ -16,6 +16,7 @@ import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.Tasklet;
+import org.springframework.batch.item.adapter.ItemReaderAdapter;
 import org.springframework.batch.item.database.JdbcCursorItemReader;
 import org.springframework.batch.item.file.FlatFileItemReader;
 import org.springframework.batch.item.file.mapping.BeanWrapperFieldSetMapper;
@@ -37,10 +38,12 @@ import com.infybuzz.listener.FirstStepListener;
 import com.infybuzz.model.StudentCsv;
 import com.infybuzz.model.StudentJdbc;
 import com.infybuzz.model.StudentJson;
+import com.infybuzz.model.StudentResponse;
 import com.infybuzz.model.StudentXml;
 import com.infybuzz.processor.FirstItemProcessor;
 import com.infybuzz.reader.FirstItemReader;
 import com.infybuzz.service.SecondTasklet;
+import com.infybuzz.service.StudentService;
 import com.infybuzz.writer.FirstItemWriter;
 
 //Esta anotación se necesita para marcar la clase como una de configuración
@@ -79,8 +82,12 @@ public class SampleJob {
 	private FirstItemWriter firstItemWriter;
 	
 	//Se inyecta la datasource para la conexión a una bd.
-	@Autowired
-	private DataSource dataSource;
+	//@Autowired
+	//private DataSource dataSource;
+	
+	//Se inyecta el servicio con el cual llamaremos a una REST API.
+	@Autowired 
+	StudentService studentService;
 	
 	
 	//Este job representa un Tasklet-step. 
@@ -152,11 +159,12 @@ public class SampleJob {
 	//Representa un chunkStep, recordemos que los chunkSteps se componen de un reader, processor y writer.
 	private Step firstChunkStep() {
 		return stepBuilderFactory.get("First chunk Step")
-				.<StudentJdbc, StudentJdbc>chunk(3)//Primero asignamos <Input, Output> y despues la longitud.
+				.<StudentResponse, StudentResponse>chunk(3)//Primero asignamos <Input, Output> y despues la longitud.
 				//.reader(flatFileItemReader(null)) //Agregamos el reader para csv
 				//.reader(jsonItemReader(null))//Agregamos el reader para JSON
 				//.reader(staxEventItemReader(null)) //Agregamos el reader para xml
-				.reader(jdbcCursorItemReader()) //Agregamos el reader para jdbc/db
+				//.reader(jdbcCursorItemReader()) //Agregamos el reader para jdbc/db
+				.reader(itemReaderAdapter()) //Agregamos el reader para peticiones REST.
 				//.processor(firstItemProcessor) //Agregamos el processor
 				.writer(firstItemWriter) //Agregamos el writer.
 				.build();
@@ -251,7 +259,7 @@ public class SampleJob {
 	*/
 	
 	//Metodo Reader para leer una base de datos con jdbc.
-	public JdbcCursorItemReader<StudentJdbc> jdbcCursorItemReader(){
+/*	public JdbcCursorItemReader<StudentJdbc> jdbcCursorItemReader(){
 		
 		//Se instancia un JdbcCursorItemReader
 		JdbcCursorItemReader<StudentJdbc> jdbcCursorItemReader =
@@ -275,6 +283,21 @@ public class SampleJob {
 		//jdbcCursorItemReader.setMaxItemCount(8); // <-- Establece la cantidad maxima de registros que leera.
 		
 		return jdbcCursorItemReader;
+	}
+	*/
+	
+	//Reader para peticiones Rest Api.
+	public ItemReaderAdapter<StudentResponse> itemReaderAdapter(){
+		//Declaramos un ItemReaderAdapter
+		ItemReaderAdapter<StudentResponse> itemReaderAdapter = 
+				new ItemReaderAdapter<StudentResponse>();
+		
+		//Le proporcionamos el servicio a utilizar
+		itemReaderAdapter.setTargetObject(studentService);
+		//Le proporcionamos el metodo del servicio a utilizar.
+		itemReaderAdapter.setTargetMethod("getStudent");
+		
+		return itemReaderAdapter;
 	}
 	
 }
